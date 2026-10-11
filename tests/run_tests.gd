@@ -21,6 +21,7 @@ func _ready() -> void:
 	await _test_scene_switcher()
 	await _test_option_rows()
 	await _test_tutorial_ui()
+	await _test_reading_font()
 	await _test_title_menu()
 	await _test_text_entry_pad_enter()
 	_test_leaderboard_panel()
@@ -426,6 +427,31 @@ func _button_texts(title: Node) -> Array:
 
 
 ## The title menu keeps local play and the tutorial on their own screens.
+## Only text that wraps reads in Montserrat; short labels and headings keep
+## the Kenney fonts.
+func _test_reading_font() -> void:
+	var box := VBoxContainer.new()
+	var long := LGUi.label("Walk around the village with the left stick. You can only see as far as the light reaches.")
+	long.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(long)
+	var short := LGUi.label("Dawn in 7:50", "HintLabel")
+	box.add_child(short)
+	var heading := LGUi.label("A night in the village", "HeaderMedium")
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(heading)
+	add_child(box)
+	await get_tree().process_frame
+	check(long.get_theme_font("font") == HollowTheme.text_font, "wrapped text uses the reading font")
+	check(short.get_theme_font("font") == LGTheme.body_font, "short labels keep the Kenney font")
+	check(heading.get_theme_font("font") == LGTheme.heading_font, "headings keep the Kenney heading font")
+	var later := LGUi.label("Chores need a lit lantern nearby, so stay in the light and stay together.")
+	box.add_child(later)
+	later.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	await get_tree().process_frame
+	check(later.get_theme_font("font") == HollowTheme.text_font, "text that wraps after joining the tree uses the reading font")
+	box.free()
+
+
 func _test_title_menu() -> void:
 	LGSettings.set_value("player", "name", "Tester", false)
 	LGSettings.set_value("tutorial", "welcomed", true, false)
