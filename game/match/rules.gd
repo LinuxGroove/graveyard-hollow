@@ -88,22 +88,22 @@ const FLICKER_TIME := 3.0
 const CHORES := {
 	"water": {"label": "Water the animals", "steps": [
 		{"station": "fountain", "game": "mash", "min": 2.5, "carry": "water", "label": "Pump water at the fountain"},
-		{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5, "label": "Pour it in the animals' trough"}]},
+		{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5, "label": "Fill the animals' trough"}]},
 	"fence": {"label": "Mend the broken fence", "steps": [
-		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "planks", "label": "Fetch planks from the woodpile"},
-		{"station": "fence", "game": "timing", "min": 3.0, "label": "Nail the planks to the fence"}]},
+		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "planks", "label": "Get planks at the woodpile"},
+		{"station": "fence", "game": "timing", "min": 3.0, "label": "Nail planks to the fence"}]},
 	"animals": {"label": "Feed the animals", "steps": [
 		{"station": "hay", "game": "hold", "time": 3.0, "min": 2.5, "carry": "hay", "label": "Fork up hay in the hayfield"},
-		{"station": "pen", "game": "hold", "time": 3.5, "min": 3.0, "label": "Feed the hay to the animals"}]},
+		{"station": "pen", "game": "hold", "time": 3.5, "min": 3.0, "label": "Feed hay to the animals"}]},
 	"candles": {"label": "Light the chapel candles", "steps": [
-		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "carry": "taper", "label": "Light a taper at the campfire"},
+		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "carry": "taper", "label": "Get a flame at the campfire"},
 		{"station": "chapel", "game": "sequence", "min": 2.2, "label": "Light the chapel candles"}]},
 	"market": {"label": "Stock the market stall", "steps": [
 		{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5, "carry": "eggs", "label": "Collect eggs at the farm"},
-		{"station": "market", "game": "sequence", "min": 2.2, "label": "Set out the eggs at the market"}]},
+		{"station": "market", "game": "sequence", "min": 2.2, "label": "Set out eggs at the market"}]},
 	"wood": {"label": "Bring wood to the campfire", "steps": [
-		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "wood", "label": "Fetch wood from the woodpile"},
-		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "label": "Stack the wood by the campfire"}]},
+		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "wood", "label": "Get wood at the woodpile"},
+		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "label": "Stack it by the campfire"}]},
 	"hay": {"label": "Stack the hay", "steps": [{"station": "hay", "game": "hold", "time": 4.5, "min": 4.0}]},
 	"grave": {"label": "Dig at the old grave", "steps": [{"station": "grave", "game": "mash", "min": 2.5, "dark": true}]},
 }

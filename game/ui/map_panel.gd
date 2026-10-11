@@ -4,6 +4,7 @@ extends Control
 ## your chores and you.
 
 const LABEL_SIZE := 15
+const CHORE_RADIUS := 11.0
 
 var game: Game
 var _canvas: Control
@@ -74,19 +75,18 @@ func _draw_map() -> void:
 			_canvas.draw_circle(p, 5, Color(0.2, 0.2, 0.25))
 	var bell := _to_map(game.village.bell_position())
 	_canvas.draw_rect(Rect2(bell - Vector2(7, 7), Vector2(14, 14)), Color("b0782a"))
+	var chores: Array[Vector2] = []
+	for c in game.available_chores():
+		var sp: Vector3 = game.station_position(c.data.station)
+		if sp != Vector3.INF:
+			chores.append(_to_map(sp))
 	# Names go over the lanterns but under your chores and you.
 	var marks: Dictionary = game.village.landmark_positions()
 	for n in marks:
-		_draw_label(font, map_label(str(n)), _to_map(marks[n]), Color(ink, 0.8))
-	var n := 1
-	for c in game.available_chores():
-		var sp: Vector3 = game.station_position(c.data.station)
-		if sp == Vector3.INF:
-			continue
-		var p := _to_map(sp)
-		_canvas.draw_circle(p, 11, Color("e8635a"))
-		_canvas.draw_string(font, p + Vector2(-10, 6), str(n), HORIZONTAL_ALIGNMENT_CENTER, 20, 16, Color.WHITE)
-		n += 1
+		_draw_label(font, map_label(str(n)), _to_map(marks[n]), Color(ink, 0.8), chores)
+	for i in chores.size():
+		_canvas.draw_circle(chores[i], CHORE_RADIUS, Color("e8635a"))
+		_canvas.draw_string(font, chores[i] + Vector2(-10, 6), str(i + 1), HORIZONTAL_ALIGNMENT_CENTER, 20, 16, Color.WHITE)
 	if game.player:
 		var p := _to_map(game.player.global_position)
 		var fwd := Vector2(sin(game.player.avatar.rotation.y), cos(game.player.avatar.rotation.y))
@@ -100,10 +100,20 @@ static func map_label(landmark: String) -> String:
 
 
 ## Writes `text` centred above `at`, whole, kept inside the map, on a
-## parchment outline so it stays readable over the lantern dots.
-func _draw_label(font: Font, text: String, at: Vector2, color: Color) -> void:
+## parchment outline so it stays readable over the lantern dots. It moves up
+## above any chore marker in `avoid` that would cover it.
+func _draw_label(font: Font, text: String, at: Vector2, color: Color, avoid: Array[Vector2]) -> void:
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE).x
 	var x := clampf(at.x - w * 0.5, 4.0, _canvas.size.x - w - 4.0)
-	var pos := Vector2(x, at.y - 15.0)
+	var y := at.y - 15.0
+	var moved := true
+	while moved:
+		moved = false
+		for m in avoid:
+			var near_x := absf(m.x - clampf(m.x, x, x + w)) < CHORE_RADIUS
+			if near_x and m.y > y - LABEL_SIZE - CHORE_RADIUS and m.y < y + CHORE_RADIUS + 4.0:
+				y = m.y - CHORE_RADIUS - 4.0
+				moved = true
+	var pos := Vector2(x, maxf(y, LABEL_SIZE))
 	_canvas.draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, 4, Color(LGTheme.PARCHMENT, 0.85))
 	_canvas.draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, color)
