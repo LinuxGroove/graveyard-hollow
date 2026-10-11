@@ -23,6 +23,11 @@ var _time_left := 0.0
 var _phase := Rules.MeetingPhase.DISCUSS
 var _voted := false
 var _last_focus: Control
+## The meeting button that last had focus, given back when a menu over the
+## meeting closes.
+var _own_focus: Control
+var _was_covered := false
+var _picking := false
 
 
 func setup(p_game: Game) -> void:
@@ -89,13 +94,19 @@ func setup(p_game: Game) -> void:
 	_chat = GridContainer.new()
 	_chat.columns = 2
 	right.add_child(_chat)
+	# The numbers are Game.QUICK_CHAT's lines.
 	_add_chat("I suspect...", func(): _pick_player("Who do you suspect?", func(a): _say(0, a, -1)))
 	_add_chat("I trust...", func(): _pick_player("Who do you trust?", func(a): _say(1, a, -1)))
 	_add_chat("I was near...", func(): _pick_place("Where were you?", func(p): _say(2, 0, p)))
+	_add_chat("I was with...", func(): _pick_player("Who were you with?", func(a): _say(7, a, -1)))
 	_add_chat("I saw someone...", func(): _pick_player("Who did you see?", func(a):
 		_pick_place("Where did you see them?", func(p): _say(3, a, p))))
+	_add_chat("I looked closely...", func(): _pick_player("Who did you look at?", func(a):
+		_open_picker("What did you learn?", [["They're Hollow", 10], ["Not Hollow", 11]], func(k): _say(k, a, -1))))
+	_add_chat("Vote for...", func(): _pick_player("Who should go?", func(a): _say(12, a, -1)))
 	_add_chat("Let's skip", func(): _say(4, 0, -1))
 	_add_chat("It wasn't me!", func(): _say(5, 0, -1))
+	_add_chat("More...", _pick_more)
 	_picker = PanelContainer.new()
 	_picker.theme_type_variation = "ParchmentPanel"
 	_picker.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -148,16 +159,43 @@ func close() -> void:
 	_picker.visible = false
 
 
+## Gives focus back to the meeting, as it was before something covered it.
+func refocus() -> void:
+	if _own_focus and is_instance_valid(_own_focus) and _own_focus.is_visible_in_tree() \
+			and _own_focus.focus_mode != Control.FOCUS_NONE and not (_own_focus is BaseButton and _own_focus.disabled):
+		_own_focus.grab_focus.call_deferred()
+	else:
+		_focus_something()
+
+
+## Whether the pause menu or a card is open over the meeting.
+func _covered() -> bool:
+	var hud := game.hud
+	return hud != null and hud.pause != null and (hud.pause.visible or hud.howto.visible or hud.role_card.visible)
+
+
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	# While a menu is over the meeting its buttons can't take focus, or a
+	# controller would wander onto them; when it closes they get it back.
+	var covered := _covered()
+	if covered != _was_covered:
+		_was_covered = covered
+		focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED if covered else Control.FOCUS_BEHAVIOR_INHERITED
+		if not covered:
+			refocus()
+	elif not covered:
+		var f := get_viewport().gui_get_focus_owner()
+		if f and is_ancestor_of(f):
+			_own_focus = f
 	_time_left = maxf(0.0, _time_left - delta)
 	var what := "Talk" if _phase == Rules.MeetingPhase.DISCUSS else ("Vote" if _phase == Rules.MeetingPhase.VOTE else "")
 	_timer.text = "%s  %d" % [what, ceili(_time_left)] if what != "" else ""
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or _covered():
 		return
 	if _picker.visible and event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
@@ -235,7 +273,7 @@ func _update_controls() -> void:
 
 
 func _focus_something() -> void:
-	if _picker.visible:
+	if _picker.visible or _covered():
 		return
 	var focused := get_viewport().gui_get_focus_owner()
 	if focused and is_ancestor_of(focused) and focused.focus_mode != Control.FOCUS_NONE and not (focused is BaseButton and focused.disabled):
@@ -307,8 +345,26 @@ func _pick_place(title: String, cb: Callable) -> void:
 	_open_picker(title, items, cb)
 
 
+## The rest of the quick-chat lines, a picker of their own.
+func _pick_more() -> void:
+	var lines := [
+		["Someone's lying...", func(): _pick_player("Who is lying?", func(a): _say(13, a, -1))],
+		["Where were you?...", func(): _pick_player("Ask who?", func(a): _say(9, a, -1))],
+		["I saw a snuff...", func(): _pick_player("Who put out a lantern?", func(a):
+			_pick_place("Which lantern was it near?", func(p): _say(8, a, p)))],
+		["Where was everyone?", func(): _say(6, 0, -1)],
+		["I was doing chores", func(): _say(15, 0, -1)],
+		["I was relighting", func(): _say(16, 0, -1)],
+		["I don't know yet", func(): _say(17, 0, -1)],
+		["Stick together", func(): _say(14, 0, -1)],
+	]
+	_open_picker("Say...", lines, func(line: Callable): line.call())
+
+
 func _open_picker(title: String, items: Array, cb: Callable) -> void:
-	_last_focus = get_viewport().gui_get_focus_owner()
+	# A picker opened from another picker hands back to where the first began.
+	if not _picking:
+		_last_focus = get_viewport().gui_get_focus_owner()
 	for c in _picker_grid.get_children():
 		_picker_grid.remove_child(c)
 		c.queue_free()
@@ -316,8 +372,12 @@ func _open_picker(title: String, items: Array, cb: Callable) -> void:
 	for item in items:
 		var value: Variant = item[1]
 		var b := LGUi.button(item[0], func():
-			_close_picker()
-			cb.call(value), 220)
+			_picking = true
+			_picker.visible = false
+			cb.call(value)
+			_picking = false
+			if not _picker.visible:
+				_close_picker(), 220)
 		_picker_grid.add_child(b)
 	var back := LGUi.button("Back", _close_picker, 220)
 	back.theme_type_variation = "DangerButton"

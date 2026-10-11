@@ -342,6 +342,10 @@ func _chores() -> void:
 		if game.player.interact.get("kind", "") != "chore":
 			push_warning("No chore prompt at %s" % step.station)
 			continue
+		# Stations can hold steps of more than one chore: pick this one.
+		for c in game.available_chores():
+			if c.key == key:
+				game.player.interact = {"kind": "chore", "target": c.index, "text": Rules.step_label(key, c.step), "chore": c}
 		game.player._do_interact()
 		await _wait(0.4)
 		var cg := game.hud.chore_game
@@ -372,9 +376,9 @@ func _chores() -> void:
 			game.hud.close_chore()
 			await _wait(0.3)
 	# Too dark to work.
-	var market: Vector3 = stations["market"].global_position
-	_lanterns_off(market, Rules.WORK_LIGHT_RADIUS + 0.5)
-	await _put(game.my_id, _spot_near(market, 1.6))
+	var hay: Vector3 = stations["hay"].global_position
+	_lanterns_off(hay, Rules.WORK_LIGHT_RADIUS + 0.5)
+	await _put(game.my_id, _spot_near(hay, 1.6))
 	await _wait(0.6)
 	await _shot("chores", "too-dark", "A station with no lit lantern nearby is too dark to work at")
 
@@ -402,18 +406,23 @@ func _meetings() -> void:
 	await _talk(12.0)
 	await _shot("meetings", "report", "A meeting called by a report: bots say what they saw")
 	var mp := game.hud.meeting
-	mp._chat.get_child(0).pressed.emit()
+	_press_chat("I suspect...")
 	await _wait(0.4)
 	await _shot("meetings", "quick-chat", "Quick chat: choosing who you suspect")
 	_press_picker(game.player_name(hollow))
 	await _wait(0.3)
-	mp._chat.get_child(3).pressed.emit()
+	_press_chat("I saw someone...")
 	await _wait(0.2)
 	_press_picker(game.player_name(hollow))
 	await _wait(0.4)
 	await _shot("meetings", "quick-chat-place", "Quick chat: choosing where you saw them")
 	_press_picker(host.village.landmark_name(spot).capitalize())
 	await _wait(1.0)
+	_press_chat("More...")
+	await _wait(0.4)
+	await _shot("meetings", "quick-chat-more", "Quick chat: more to say")
+	mp._close_picker()
+	await _wait(0.3)
 	await _to_vote()
 	await _shot("meetings", "vote", "Voting, in secret")
 	mp._vote(hollow)
@@ -743,6 +752,14 @@ func _end_meeting() -> void:
 	while host.phase == Rules.Phase.MEETING:
 		await get_tree().process_frame
 	await _wait(0.5)
+
+
+func _press_chat(label: String) -> void:
+	for b in game.hud.meeting._chat.get_children():
+		if b is Button and b.text == label:
+			b.pressed.emit()
+			return
+	push_warning("No quick chat button %s" % label)
 
 
 func _press_picker(label: String) -> void:

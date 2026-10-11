@@ -47,8 +47,9 @@ const ROLE_CARDS := {
 	},
 }
 
-## Chores in the practice round: one of each kind of minigame.
-const PRACTICE_CHORES := ["animals", "water", "fence", "candles"]
+## Chores in the practice round: every kind of minigame, and one chore that
+## carries something from one station to another.
+const PRACTICE_CHORES := ["water", "fence", "candles", "hay"]
 
 const SKIP_VOTE := 0
 
@@ -71,7 +72,7 @@ const GHOST_SPEED := 4.2
 
 # Timings (seconds)
 const RELIGHT_TIME := 2.0
-const SNUFF_COOLDOWN := 22.0
+const SNUFF_COOLDOWN := 15.0
 const TAKE_COOLDOWN := 25.0
 const FIRST_COOLDOWN := 12.0
 const BELL_COOLDOWN := 15.0
@@ -81,17 +82,30 @@ const FLICKER_TIME := 3.0
 
 ## Chores: each has one or more stations visited in order, each with a
 ## minigame. `min` is the shortest time the host accepts for that step.
+## Most chores carry something across the village between two stations, so
+## they take a while and leave the Lamplighter out on their own; a step's
+## `label` says where to go next.
 const CHORES := {
-	"water": {"label": "Pump water at the fountain", "steps": [{"station": "fountain", "game": "mash", "min": 1.2}]},
-	"fence": {"label": "Mend the broken fence", "steps": [{"station": "fence", "game": "timing", "min": 1.5}]},
-	"animals": {"label": "Feed the animals", "steps": [{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5}]},
-	"candles": {"label": "Light the chapel candles", "steps": [{"station": "chapel", "game": "sequence", "min": 1.2}]},
-	"hay": {"label": "Stack the hay", "steps": [{"station": "hay", "game": "hold", "time": 2.5, "min": 2.0}]},
+	"water": {"label": "Water the animals", "steps": [
+		{"station": "fountain", "game": "mash", "min": 2.5, "carry": "water", "label": "Pump water at the fountain"},
+		{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5, "label": "Pour it in the animals' trough"}]},
+	"fence": {"label": "Mend the broken fence", "steps": [
+		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "planks", "label": "Fetch planks from the woodpile"},
+		{"station": "fence", "game": "timing", "min": 3.0, "label": "Nail the planks to the fence"}]},
+	"animals": {"label": "Feed the animals", "steps": [
+		{"station": "hay", "game": "hold", "time": 3.0, "min": 2.5, "carry": "hay", "label": "Fork up hay in the hayfield"},
+		{"station": "pen", "game": "hold", "time": 3.5, "min": 3.0, "label": "Feed the hay to the animals"}]},
+	"candles": {"label": "Light the chapel candles", "steps": [
+		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "carry": "taper", "label": "Light a taper at the campfire"},
+		{"station": "chapel", "game": "sequence", "min": 2.2, "label": "Light the chapel candles"}]},
+	"market": {"label": "Stock the market stall", "steps": [
+		{"station": "pen", "game": "hold", "time": 3.0, "min": 2.5, "carry": "eggs", "label": "Collect eggs at the farm"},
+		{"station": "market", "game": "sequence", "min": 2.2, "label": "Set out the eggs at the market"}]},
 	"wood": {"label": "Bring wood to the campfire", "steps": [
-		{"station": "woodpile", "game": "hold", "time": 1.5, "min": 1.2, "carry": "wood"},
-		{"station": "campfire", "game": "hold", "time": 1.0, "min": 0.8}]},
-	"market": {"label": "Tidy the market stall", "steps": [{"station": "market", "game": "sequence", "min": 1.2}]},
-	"grave": {"label": "Dig at the old grave", "steps": [{"station": "grave", "game": "mash", "min": 1.5, "dark": true}]},
+		{"station": "woodpile", "game": "hold", "time": 3.0, "min": 2.5, "carry": "wood", "label": "Fetch wood from the woodpile"},
+		{"station": "campfire", "game": "hold", "time": 2.5, "min": 2.0, "label": "Stack the wood by the campfire"}]},
+	"hay": {"label": "Stack the hay", "steps": [{"station": "hay", "game": "hold", "time": 4.5, "min": 4.0}]},
+	"grave": {"label": "Dig at the old grave", "steps": [{"station": "grave", "game": "mash", "min": 2.5, "dark": true}]},
 }
 
 ## Lobby settings the host can change. Every client gets a copy.
@@ -99,7 +113,7 @@ const DEFAULT_SETTINGS := {
 	"night_minutes": 8,
 	"hollow_count": 0,         # 0 = automatic (1 for up to 6 players, 2 above)
 	"special_roles": true,     # Seer from 5 players, Watchman from 7
-	"chores_each": 5,
+	"chores_each": 7,
 	"discussion_seconds": 45,
 	"vote_seconds": 30,
 	"reveal_on_banish": true,
@@ -143,6 +157,15 @@ static func deal_roles(ids: Array, settings: Dictionary, rng: RandomNumberGenera
 		roles[order[i]] = Role.LAMPLIGHTER
 		i += 1
 	return roles
+
+
+## What to do for one step of a chore, or the chore's name if it has one step.
+static func step_label(key: String, step: int) -> String:
+	var chore: Dictionary = CHORES[key]
+	var steps: Array = chore.steps
+	if step >= 0 and step < steps.size() and steps[step].has("label"):
+		return steps[step].label
+	return chore.label
 
 
 static func deal_chores(count: int, rng: RandomNumberGenerator) -> Array:

@@ -537,6 +537,9 @@ Cube Pets, Food Kit, Light Masks, Emote Pack, Input Prompts,
 UI Pack - Adventure, Kenney Fonts, Music Loops, RPG Audio,
 Impact Sounds, Interface Sounds, Music Jingles
 
+Montserrat font by Julieta Ulanovsky and the Montserrat
+Project Authors, SIL Open Font License 1.1
+
 [b]Made with[/b]
 Godot Engine (godotengine.org), MIT
 Nakama Godot client by Heroic Labs, Apache-2.0

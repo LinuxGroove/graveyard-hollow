@@ -93,7 +93,7 @@ parts:
       "$GODOT" --headless --path . --export-release "$PRESET" "$CRAFT_PART_INSTALL/game/graveyard-hollow"
       test -f "$CRAFT_PART_INSTALL/game/graveyard-hollow.pck"
       install -m 755 snap/local/graveyard-hollow "$CRAFT_PART_INSTALL/bin/"
-      cp LICENSE CREDITS.md "$CRAFT_PART_INSTALL/game/"
+      cp LICENSE CREDITS.md assets/fonts/OFL.txt "$CRAFT_PART_INSTALL/game/"
 
   lemonade:
     plugin: nil

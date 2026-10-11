@@ -9,7 +9,9 @@ in game-ideas.
 ## How a night plays
 
 - **Lamplighters** do chores around Moonpatch Village and relight lanterns.
-  Chores need a lit lantern nearby, so darkness slows the village down.
+  Most chores carry something from one place to another, and chores need a
+  lit lantern nearby, so darkness slows the village down. The map shows each
+  lantern as you last saw it.
 - One or two secret **Hollow** snuff lanterns and take villagers who wander
   into the dark. Hollow see each other.
 - The **Seer** may look closely at one villager per night; the **Watchman**

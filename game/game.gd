@@ -20,6 +20,8 @@ signal meeting_ended
 signal game_over(res: Dictionary)
 signal toast(text: String)
 
+## Quick-chat lines, by number; the meeting panel's buttons send the number.
+## Add new lines at the end (and bump PROTOCOL).
 const QUICK_CHAT := [
 	"I suspect {a}.",
 	"I trust {a}.",
@@ -28,6 +30,17 @@ const QUICK_CHAT := [
 	"Let's skip. We don't know enough.",
 	"It wasn't me!",
 	"Where was everyone?",
+	"I was with {a}.",
+	"I saw {a} put out the lantern near {place}.",
+	"{a}, where were you?",
+	"I looked closely at {a}. They're Hollow!",
+	"I looked closely at {a}. They're not Hollow.",
+	"Let's vote for {a}.",
+	"{a} is lying.",
+	"Let's stick together.",
+	"I was doing my chores.",
+	"I was relighting lanterns.",
+	"I don't know yet.",
 ]
 const EMOTES := {
 	1: "res://assets/kenney/emotes/emote_exclamation.png",
@@ -58,6 +71,9 @@ var role := -1
 var allies: Array = []
 var you := {}
 var lit: Array[bool] = []
+## What this player last saw (or heard) of each lantern, for the map: one put
+## out where nobody was looking shows as lit until someone sees it.
+var seen_lit: Array[bool] = []
 var night_left := 0.0
 var night_total := 1.0
 var chores_done := 0
@@ -70,6 +86,8 @@ var landmarks: Array[String] = []
 var settings := {}
 
 var _lantern_nodes: Array = []
+var _lanterns_known := false
+var _look_t := 0.0
 var _views := {}  # id -> Avatar
 var _remain_nodes := {}
 var _actors_root: Node3D
@@ -88,6 +106,7 @@ func _ready() -> void:
 	_lantern_nodes = village.lanterns()
 	for l in _lantern_nodes:
 		lit.append(true)
+		seen_lit.append(true)
 	landmarks = village.landmark_names()
 	_actors_root = Node3D.new()
 	_actors_root.name = "Actors"
@@ -110,6 +129,22 @@ func _ready() -> void:
 	private_changed.connect(_mark_chore_stations)
 	LGAudio.play_music(MUSIC_NIGHT, -4.0)
 	Session.report_loaded()
+
+
+func _process(delta: float) -> void:
+	_look_t -= delta
+	if _look_t <= 0.0 and phase == Rules.Phase.NIGHT:
+		_look_t = 0.2
+		_look_at_lanterns()
+
+
+## Notes the lanterns on screen, or close enough to see, as they are now.
+func _look_at_lanterns() -> void:
+	for i in lit.size():
+		var p := lantern_position(i)
+		var near := player != null and Vector2(p.x - player.global_position.x, p.z - player.global_position.z).length() <= Rules.VIEW_RADIUS
+		if near or (camera.is_inside_tree() and camera.is_position_in_frustum(p + Vector3(0, 1.5, 0))):
+			seen_lit[i] = lit[i]
 
 
 func on_player_left(id: int) -> void:
@@ -370,8 +405,13 @@ func _h_lanterns(states: PackedByteArray) -> void:
 			var d := player.global_position.distance_to(lantern_position(i))
 			if d < Rules.VIEW_RADIUS * 1.5:
 				LGAudio.play_sfx(SFX_RELIGHT if on else SFX_SNUFF, -6.0 - d * 0.5, 0.1)
+				seen_lit[i] = on
 		lit[i] = on
 		_lantern_nodes[i].set_lit(on)
+		# Everyone knows how the night starts.
+		if not _lanterns_known:
+			seen_lit[i] = on
+	_lanterns_known = true
 	lanterns_changed.emit()
 
 

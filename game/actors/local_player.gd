@@ -195,7 +195,7 @@ func _update_targets() -> void:
 			var d := _flat(pos, sp)
 			if d <= best:
 				best = d
-				var label: String = Rules.CHORES[c.key].label
+				var label: String = Rules.step_label(c.key, c.step)
 				if c.steps > 1:
 					label += " (%d/%d)" % [c.step + 1, c.steps]
 				if not c.data.get("dark", false) and not game.work_lit(sp):

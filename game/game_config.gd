@@ -13,7 +13,7 @@ const PLAYTEST := {
 }
 ## Bump PROTOCOL whenever network messages change; mismatched builds are told
 ## to update instead of desyncing.
-const PROTOCOL := 2
+const PROTOCOL := 3
 const MAX_PLAYERS := 10
 const MIN_PLAYERS := 4
 ## Quick match fills the village with bots up to a random size in this range.
