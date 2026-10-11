@@ -22,6 +22,7 @@ func _ready() -> void:
 	await _test_option_rows()
 	await _test_tutorial_ui()
 	await _test_title_menu()
+	await _test_text_entry_pad_enter()
 	_test_leaderboard_panel()
 	_test_version()
 	_test_network_check()
@@ -370,6 +371,54 @@ func _test_meeting_focus() -> void:
 	game.queue_free()
 	await get_tree().process_frame
 	Session.leave()
+
+
+## Some controllers also send Enter with A, and on Linux the Enter comes a
+## frame first. On a name field that's being typed in (as it is when its page
+## opens), A must still open the on-screen keyboard, not submit the field.
+## Enter on its own still submits.
+func _test_text_entry_pad_enter() -> void:
+	var edit := LineEdit.new()
+	LGUi.gamepad_text_entry(edit)
+	add_child(edit)
+	var submitted := []
+	edit.text_submitted.connect(func(t): submitted.append(t))
+	for order in [["enter", "a"], ["a", "enter"]]:
+		edit.grab_focus()
+		await get_tree().process_frame
+		check(edit.is_editing(), "a field focused by its page is being typed in")
+		for pressed in [true, false]:
+			for what in order:
+				_send_input(what, pressed)
+				await get_tree().process_frame
+			await get_tree().create_timer(0.2).timeout
+		check(submitted.is_empty(), "A that comes with Enter (%s first) doesn't submit the field" % order[0])
+		var boards := get_tree().root.find_children("*", "OnScreenKeyboard", true, false)
+		check(boards.size() == 1, "A that comes with Enter (%s first) opens the keyboard" % order[0])
+		for b in boards:
+			b.get_parent().free()
+	edit.grab_focus()
+	await get_tree().process_frame
+	for pressed in [true, false]:
+		_send_input("enter", pressed)
+		await get_tree().process_frame
+	await get_tree().create_timer(0.2).timeout
+	check(submitted.size() == 1, "Enter on its own submits the field")
+	edit.free()
+
+
+func _send_input(what: String, pressed: bool) -> void:
+	var ev: InputEvent
+	if what == "a":
+		ev = InputEventJoypadButton.new()
+		ev.button_index = JOY_BUTTON_A
+	else:
+		ev = InputEventKey.new()
+		ev.keycode = KEY_ENTER
+		ev.physical_keycode = KEY_ENTER
+	ev.pressed = pressed
+	Input.parse_input_event(ev)
+	Input.flush_buffered_events()
 
 
 func _button_texts(title: Node) -> Array:
