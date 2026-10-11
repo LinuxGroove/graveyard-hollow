@@ -319,7 +319,7 @@ func _build_chores() -> void:
 	_chores_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_chores_panel.offset_right = -16
 	_chores_panel.offset_top = 12
-	_chores_panel.custom_minimum_size.x = 250
+	_chores_panel.custom_minimum_size.x = 300
 	root.add_child(_chores_panel)
 	_chore_list = VBoxContainer.new()
 	_chores_panel.add_child(_chore_list)
@@ -418,10 +418,10 @@ func _refresh_chores() -> void:
 		var chore: Dictionary = Rules.CHORES[c[0]]
 		var text: String = chore.label
 		if chore.steps.size() > 1 and not c[2]:
-			text += " (%d/%d)" % [c[1] + 1, chore.steps.size()]
+			text = "%s (%d/%d)" % [Rules.step_label(c[0], c[1]), c[1] + 1, chore.steps.size()]
 		var l := LGUi.label(("Done: " if c[2] else "") + text, "HintLabel")
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size.x = 240
+		l.custom_minimum_size.x = 290
 		if c[2]:
 			l.modulate = Color(1, 1, 1, 0.55)
 		_chore_list.add_child(l)

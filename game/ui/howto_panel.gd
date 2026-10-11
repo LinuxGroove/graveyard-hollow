@@ -23,7 +23,7 @@ static func pages() -> Array:
 		{"title": "The goal", "body":
 			"Every night in Moonpatch Village the lanterns must stay lit until dawn.\n\nMost of you are Lamplighters. But one or two of you are secretly the Hollow, and they are putting the lanterns out and taking villagers in the dark.\n\nWork out who you can trust."},
 		{"title": "A night in the village", "body":
-			"Walk around the village with the left stick. You can only see as far as the light reaches, so stay near the lanterns.\n\nEvery Lamplighter has chores to finish, like pumping water or mending the fence. Each one is a short game at a station. Chores need a lit lantern nearby.\n\nWhen a lantern goes dark, hold the action button next to it to relight it."},
+			"Walk around the village with the left stick. You can only see as far as the light reaches, so stay near the lanterns.\n\nEvery Lamplighter has chores to finish, like watering the animals or mending the fence. Most take you to two places, carrying something between them, and each stop is a short game. Chores need a lit lantern nearby.\n\nWhen a lantern goes dark, hold the action button next to it to relight it. Your map shows the lanterns as you last saw them."},
 		{"title": "Bells and meetings", "body":
 			"Found someone who was taken? Report them. Or ring the bell in the square. Either one calls a meeting and everyone gathers.\n\nTalk it over with quick chat, then vote in secret. The villager with the most votes is banished and is out of the village. Skipping is always allowed.\n\nBanished or taken players become ghosts. They can still finish chores."},
 		{"title": "How to win", "body":

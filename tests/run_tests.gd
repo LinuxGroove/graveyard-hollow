@@ -12,7 +12,7 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--games="):
 			games = arg.substr(8).to_int()
-	LGTheme.apply(get_tree().root)
+	HollowTheme.apply(get_tree().root)
 	LGInput.register_actions(GameConfig.ACTIONS)
 	_test_join_codes()
 	_test_roles()
@@ -31,6 +31,7 @@ func _ready() -> void:
 	_test_name_maker()
 	await _test_quick_match_bots()
 	await _test_practice()
+	await _test_meeting_focus()
 	await _test_bot_nights(games)
 	print("\n%d checks, %d failed" % [checks, failures])
 	get_tree().quit(1 if failures > 0 else 0)
@@ -212,9 +213,15 @@ func _test_bot_nights(games: int) -> void:
 		var checked_votes := false
 		var steps := 0
 		var limit := int((host.night_total + 600.0) * 30.0)
+		var goal_at := -1
+		var all_at := -1
 		while host.phase != Rules.Phase.ENDED and steps < limit:
 			host._process(1.0 / 30.0)
 			steps += 1
+			if goal_at < 0 and host.chore_fraction() >= float(settings.dawn_chore_goal):
+				goal_at = int(host.night_total - host.night_left)
+			if all_at < 0 and host.chores_total > 0 and host.chores_done >= host.chores_total:
+				all_at = int(host.night_total - host.night_left)
 			if host.phase == Rules.Phase.MEETING and not was_meeting:
 				meetings += 1
 				checked_votes = false
@@ -230,9 +237,9 @@ func _test_bot_nights(games: int) -> void:
 		check(host.chores_done > 0, "game %d: bots did chores" % g)
 		if res.has("winner"):
 			wins[res.winner] += 1
-		print("game %d: %d players, %s won (%s) after %d s, chores %d/%d, lanterns %d/%d, %s" % [
+		print("game %d: %d players, %s won (%s) after %d s, chores %d/%d (dawn goal at %d s, all at %d s), lanterns %d/%d, %s" % [
 			g, n, "village" if res.get("winner") == Rules.Team.VILLAGE else "Hollow", res.get("reason"),
-			int(res.get("time", 0)), host.chores_done, host.chores_total, host.lit_count(), host.lit.size(), host.stats])
+			int(res.get("time", 0)), host.chores_done, host.chores_total, goal_at, all_at, host.lit_count(), host.lit.size(), host.stats])
 		check(meetings == host.stats.meetings, "game %d: meeting count matches" % g)
 		game.queue_free()
 		await get_tree().process_frame
@@ -301,6 +308,65 @@ func _test_practice() -> void:
 	check(host.phase == Rules.Phase.NIGHT, "practice: ten quiet minutes don't end the round")
 	check(host.bots.keys().map(func(id): return host.actors[id].pos) == start_bots, "practice: bots stand still")
 	check(host.phase == Rules.Phase.NIGHT, "practice: the night resumes after the meeting")
+	game.queue_free()
+	await get_tree().process_frame
+	Session.leave()
+
+
+## With a controller, the meeting's buttons are only reachable by focus: the
+## pause menu must keep focus while it's open over a meeting, and give it back
+## when it closes, in talk time and in the vote.
+func _test_meeting_focus() -> void:
+	await get_tree().process_frame
+	Session.start_solo(0)
+	var players := {}
+	for i in 5:
+		players[1 if i == 0 else -i] = {"name": GameConfig.BOT_NAMES[i], "look": i, "bot": i > 0}
+	var settings := Rules.DEFAULT_SETTINGS.duplicate()
+	settings.ai_brains = false
+	var config := {"seed": 7, "players": players, "settings": settings,
+		"map": "res://game/world/moonpatch_village.tscn"}
+	Session.in_match = true
+	var game: Game = (load("res://game/game.tscn") as PackedScene).instantiate()
+	game.config = config
+	get_tree().root.add_child(game)
+	await get_tree().process_frame
+	var host := game.host
+	host.set_process(false)
+	for i in 5:
+		host._process(1.0 / 30.0)
+		await get_tree().process_frame
+	game.hud.howto.close()
+	game.hud.role_card.visible = false
+	host.actors[1].pos = host.village.bell_position()
+	host.actors[1].bell_ready = 0.0
+	check(host.act(1, Rules.Act.BELL, 0), "focus test: the bell rings")
+	var meeting := game.hud.meeting
+	var vp := get_viewport()
+	for phase in ["talk", "vote"]:
+		if phase == "vote":
+			host.meeting.left = 0.0
+			host._process(1.0 / 30.0)
+		for i in 3:
+			await get_tree().process_frame
+		var before := vp.gui_get_focus_owner()
+		check(before != null and meeting.is_ancestor_of(before), "%s: a meeting button has focus" % phase)
+		game.hud.pause.open()
+		for i in 3:
+			await get_tree().process_frame
+		var f := vp.gui_get_focus_owner()
+		check(f != null and game.hud.pause.is_ancestor_of(f), "%s: the pause menu takes focus" % phase)
+		var escapes := false
+		for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]:
+			var next := f.find_valid_focus_neighbor(side) if f else null
+			if next and meeting.is_ancestor_of(next):
+				escapes = true
+		check(not escapes, "%s: focus can't wander onto the meeting behind the pause menu" % phase)
+		game.hud.pause.close()
+		for i in 3:
+			await get_tree().process_frame
+		f = vp.gui_get_focus_owner()
+		check(f != null and meeting.is_ancestor_of(f), "%s: the meeting gets focus back when the pause menu closes" % phase)
 	game.queue_free()
 	await get_tree().process_frame
 	Session.leave()
@@ -544,16 +610,19 @@ func _drive_guide(game: Game, host: MatchHost) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	check(guide._step == 2, "relighting moves the guide to the chores")
-	for n in PracticeGuide.CHORES_NEEDED:
+	var n := 0
+	while guide._chores_done() < PracticeGuide.CHORES_NEEDED and n < 10:
 		var chore := game.current_chore()
-		check(not chore.is_empty(), "chore %d is waiting" % n)
+		check(not chore.is_empty(), "chore step %d is waiting" % n)
 		var index: int = chore.index
 		host.actors[1].pos = host.station_position(chore.data.station)
-		check(host.act(1, Rules.Act.CHORE_START, index), "chore %d starts (%s)" % [n, chore.key])
+		check(host.act(1, Rules.Act.CHORE_START, index), "chore step %d starts (%s %d)" % [n, chore.key, chore.step])
 		for i in 90:
 			host._process(1.0 / 30.0)
-		check(host.act(1, Rules.Act.CHORE_DONE, index), "chore %d finishes" % n)
+		check(host.act(1, Rules.Act.CHORE_DONE, index), "chore step %d finishes" % n)
 		await get_tree().process_frame
+		n += 1
+	check(n > PracticeGuide.CHORES_NEEDED, "practice chores include one with two steps")
 	await get_tree().process_frame
 	check(guide._step == 3, "three chores move the guide to the map")
 	game.hud.map.open()

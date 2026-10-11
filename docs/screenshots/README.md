@@ -256,21 +256,21 @@ The nights are staged by `tools/screenshot_gallery.gd`: it picks your role, plac
 
 ![Your chore stations glow; walk up to one to start](chores/station.jpg)
 
-**Pump water at the fountain (tap quickly)**
+**Water the animals (tap quickly)**
 
-![Pump water at the fountain (tap quickly)](chores/water.jpg)
+![Water the animals (tap quickly)](chores/water.jpg)
 
-**Mend the broken fence (tap in the green zone)**
+**Mend the broken fence (hold)**
 
-![Mend the broken fence (tap in the green zone)](chores/fence.jpg)
+![Mend the broken fence (hold)](chores/fence.jpg)
 
 **Feed the animals (hold)**
 
 ![Feed the animals (hold)](chores/animals.jpg)
 
-**Light the chapel candles (press the directions in order)**
+**Light the chapel candles (hold)**
 
-![Light the chapel candles (press the directions in order)](chores/candles.jpg)
+![Light the chapel candles (hold)](chores/candles.jpg)
 
 **Stack the hay (hold)**
 
@@ -284,9 +284,9 @@ The nights are staged by `tools/screenshot_gallery.gd`: it picks your role, plac
 
 ![Carrying the wood to the campfire, the second step](chores/wood-carry.jpg)
 
-**Tidy the market stall (press the directions in order)**
+**Stock the market stall (hold)**
 
-![Tidy the market stall (press the directions in order)](chores/market.jpg)
+![Stock the market stall (hold)](chores/market.jpg)
 
 **Dig at the old grave (tap quickly)**
 
@@ -313,6 +313,10 @@ The nights are staged by `tools/screenshot_gallery.gd`: it picks your role, plac
 **Quick chat: choosing where you saw them**
 
 ![Quick chat: choosing where you saw them](meetings/quick-chat-place.jpg)
+
+**Quick chat: more to say**
+
+![Quick chat: more to say](meetings/quick-chat-more.jpg)
 
 **Voting, in secret**
 

@@ -141,7 +141,7 @@ func _current() -> Dictionary:
 			if chore.is_empty():
 				return {"text": "All chores done."}
 			var kind: String = chore.data.game
-			var text := "%s\n%s" % [Rules.CHORES[chore.key].label, GAME_HINTS.get(kind, "")]
+			var text := "%s\n%s" % [Rules.step_label(chore.key, chore.step), GAME_HINTS.get(kind, "")]
 			return {"text": text, "action": "interact", "target": game.station_position(chore.data.station)}
 		"map":
 			return {"text": "Open the map.", "action": "show_map"}

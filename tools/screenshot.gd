@@ -12,7 +12,7 @@ func _ready() -> void:
 		LGSettings.register_defaults(GameConfig.SETTING_DEFAULTS)
 		LGInput.register_actions(GameConfig.ACTIONS)
 		LGInput.extend_ui_actions()
-		LGTheme.apply(get_tree().root, 22)
+		HollowTheme.apply(get_tree().root, 22)
 		var gallery: Node = load("res://tools/screenshot_gallery.gd").new()
 		add_child(gallery)
 		var only := ""
@@ -35,7 +35,7 @@ func _ready() -> void:
 		times = [6.0]
 	LGInput.register_actions(GameConfig.ACTIONS)
 	LGInput.extend_ui_actions()
-	LGTheme.apply(get_tree().root, 22)
+	HollowTheme.apply(get_tree().root, 22)
 	LGSettings.set_value("player", "name", "Ken", false)
 	if "welcome" not in args:
 		LGSettings.set_value("tutorial", "welcomed", true, false)

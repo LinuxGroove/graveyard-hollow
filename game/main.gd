@@ -11,7 +11,7 @@ func _ready() -> void:
 	LGPlaytest.setup(GameConfig.GAME_ID, GameConfig.PLAYTEST)
 	LGInput.register_actions(GameConfig.ACTIONS, float(LGSettings.get_value("input", "stick_deadzone")))
 	LGInput.extend_ui_actions()
-	LGTheme.apply(get_tree().root, 22)
+	HollowTheme.apply(get_tree().root, 22)
 	get_window().title = "Graveyard Hollow"
 	if str(LGSettings.get_value("player", "name")).strip_edges() == "" and "--solo" in OS.get_cmdline_user_args():
 		LGSettings.set_value("player", "name", "Tester", false)

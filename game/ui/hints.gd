@@ -36,7 +36,7 @@ func _process(delta: float) -> void:
 	var village_side: bool = Rules.team_of(game.role) == Rules.Team.VILLAGE
 	if not game.visible_remains.is_empty():
 		_once("body", "You found someone who was taken. Report them to call a meeting.", "interact")
-	elif village_side and game.lit.has(false):
+	elif village_side and game.seen_lit.has(false):
 		_once("dark_lantern", "A lantern went dark. Hold to relight it.", "interact")
 	elif not game.player.special.is_empty() and not game.is_ghost():
 		_once("special_%d" % game.role, str(game.player.special.text), "special")

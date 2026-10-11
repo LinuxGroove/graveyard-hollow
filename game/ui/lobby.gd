@@ -6,7 +6,7 @@ const SETTING_ROWS := [
 	["night_minutes", "Night length", [[5, "5 min"], [6, "6 min"], [8, "8 min"], [10, "10 min"], [12, "12 min"], [15, "15 min"]]],
 	["hollow_count", "Hollow", [[0, "Automatic"], [1, "1"], [2, "2"], [3, "3"]]],
 	["special_roles", "Seer and Watchman", [[true, "On"], [false, "Off"]]],
-	["chores_each", "Chores each", [[2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"]]],
+	["chores_each", "Chores each", [[2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7"], [8, "8"]]],
 	["discussion_seconds", "Talk time", [[30, "30 s"], [45, "45 s"], [60, "60 s"], [90, "90 s"], [120, "2 min"]]],
 	["vote_seconds", "Vote time", [[15, "15 s"], [20, "20 s"], [30, "30 s"], [45, "45 s"], [60, "60 s"]]],
 	["reveal_on_banish", "Reveal banished role", [[true, "On"], [false, "Off"]]],

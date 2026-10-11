@@ -6,8 +6,11 @@ extends PanelContainer
 ##   timing    press A when the moving marker is inside the green zone, 3 times
 ##   sequence  press the shown directions in order
 
-const HITS_NEEDED := 3
-const SEQUENCE_LENGTH := 4
+const HITS_NEEDED := 4
+const SEQUENCE_LENGTH := 6
+## How much one tap fills the mash bar, and how fast it drains (per second).
+const MASH_TAP := 0.08
+const MASH_DRAIN := 0.2
 const DIRS := ["chore_up", "chore_right", "chore_down", "chore_left"]
 
 var kind := "hold"
@@ -81,7 +84,7 @@ func open(chore: Dictionary, on_done: Callable) -> void:
 	_elapsed = 0.0
 	progress = 0.0
 	_hits = 0
-	_title.text = Rules.CHORES[chore.key].label
+	_title.text = Rules.step_label(chore.key, chore.step)
 	_track.visible = kind == "timing"
 	_seq_row.visible = kind == "sequence"
 	match kind:
@@ -129,7 +132,7 @@ func _process(delta: float) -> void:
 		"mash":
 			# A full bar waits out the minimum time instead of draining back.
 			if progress < 1.0:
-				progress = maxf(0.0, progress - delta * 0.18)
+				progress = maxf(0.0, progress - delta * MASH_DRAIN)
 		"timing":
 			_marker = (sin(_elapsed * 2.8) + 1.0) * 0.5
 			_track.queue_redraw()
@@ -149,7 +152,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		"mash":
 			if event.is_action_pressed("interact"):
 				get_viewport().set_input_as_handled()
-				progress = minf(1.0, progress + 0.12)
+				progress = minf(1.0, progress + MASH_TAP)
 				LGAudio.play_sfx("res://assets/kenney/audio/sfx/impactWood_light_000.ogg", -10.0, 0.15)
 		"timing":
 			if event.is_action_pressed("interact"):

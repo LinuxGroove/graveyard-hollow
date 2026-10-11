@@ -25,6 +25,8 @@ var seen := {}
 var suspicion := {}
 ## id -> true (Hollow) or false (cleared), from looking closely or witnessing
 var known := {}
+## Each lantern as this bot last saw it, as a person's map shows it.
+var seen_lit: Array[bool] = []
 var taken_by := 0
 var accused_me := 0
 ## Set by an LLM reply; used when voting if still sensible.
@@ -57,6 +59,9 @@ func tick(delta: float) -> void:
 	var a := me()
 	if a.out:
 		return
+	# Everyone knows how the night starts (the lanterns are set up after the bots).
+	if seen_lit.size() != host.lit.size():
+		seen_lit = host.lit.duplicate()
 	_look_t -= delta
 	if _look_t <= 0.0:
 		_look_t = LOOK_EVERY
@@ -78,6 +83,9 @@ func tick(delta: float) -> void:
 # --- Perception and memory -------------------------------------------------
 
 func _look(a: Dictionary) -> void:
+	for i in host.lit.size():
+		if host._flat_dist(a.pos, host.lantern_pos[i]) <= Rules.VIEW_RADIUS:
+			seen_lit[i] = host.lit[i]
 	for o in host.actors.values():
 		if o.id == id or o.out or not host.can_see(a, o):
 			continue
@@ -165,7 +173,7 @@ func hear(speaker: int, text: String) -> void:
 		if o.id == speaker or not BotBrain.names_in(low, str(o.name)):
 			continue
 		if o.id == id:
-			if accusing:
+			if accusing and not clearing:
 				accused_me = speaker
 				add_suspicion(speaker, 10.0)
 				if seer_claim and me().role != Rules.Role.HOLLOW:
@@ -310,7 +318,7 @@ func _chore_goal(a: Dictionary) -> Dictionary:
 		var pos := host._station_pos(a, i)
 		if pos == Vector3.INF:
 			continue
-		if not host._chore_step(a, i).get("dark", false) and not host.work_lit(pos):
+		if not host._chore_step(a, i).get("dark", false) and not _seems_work_lit(pos):
 			# Can't work in the dark: relight a lantern by the station first.
 			if a.ghost:
 				continue
@@ -322,12 +330,20 @@ func _chore_goal(a: Dictionary) -> Dictionary:
 	return {}
 
 
+## Whether this bot thinks a lantern lights `pos` well enough to work by.
+func _seems_work_lit(pos: Vector3) -> bool:
+	for i in seen_lit.size():
+		if seen_lit[i] and host._flat_dist(host.lantern_pos[i], pos) <= Rules.WORK_LIGHT_RADIUS:
+			return true
+	return false
+
+
 func _unlit_lantern_near(pos: Vector3, within: float) -> int:
 	var best := -1
 	var best_d := within
-	for i in host.lit.size():
+	for i in seen_lit.size():
 		var d := host._flat_dist(pos, host.lantern_pos[i])
-		if not host.lit[i] and d <= best_d:
+		if not seen_lit[i] and d <= best_d:
 			best = i
 			best_d = d
 	return best
@@ -353,8 +369,8 @@ func _flee_goal(a: Dictionary) -> Dictionary:
 func _unlit_lantern(a: Dictionary, within: float) -> int:
 	var best := -1
 	var best_d := within
-	for i in host.lit.size():
-		if host.lit[i]:
+	for i in seen_lit.size():
+		if seen_lit[i]:
 			continue
 		var d := host._flat_dist(a.pos, host.lantern_pos[i])
 		if d < best_d and not _someone_relighting(i):

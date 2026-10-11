@@ -4,8 +4,8 @@ Made by Drew, Kaden, and Ken VanDine, the LinuxGroove team.
 
 ## Art, audio and fonts
 
-All by [Kenney](https://kenney.nl), released under CC0 (public domain). Each
-pack keeps its `License.txt` next to the files.
+All by [Kenney](https://kenney.nl), released under CC0 (public domain), except
+the Montserrat font below. Each pack keeps its `License.txt` next to the files.
 
 | Pack | Used for |
 |---|---|
@@ -19,8 +19,13 @@ pack keeps its `License.txt` next to the files.
 | Emote Pack | Emote bubbles |
 | Input Prompts | Controller and keyboard button glyphs |
 | UI Pack - Adventure | Menus and panels |
-| Kenney Fonts | All text |
+| Kenney Fonts | Headings and buttons |
 | Music Loops, RPG Audio, Impact Sounds, Interface Sounds, Music Jingles | Music and sound |
+
+[Montserrat](https://github.com/JulietaUla/Montserrat) by Julieta Ulanovsky
+and the Montserrat Project Authors, under the SIL Open Font License 1.1
+(`assets/fonts/OFL.txt`, shipped as `OFL.txt` beside the game), is used for
+running text.
 
 ## Code
 
