@@ -19,13 +19,13 @@ the Montserrat font below. Each pack keeps its `License.txt` next to the files.
 | Emote Pack | Emote bubbles |
 | Input Prompts | Controller and keyboard button glyphs |
 | UI Pack - Adventure | Menus and panels |
-| Kenney Fonts | Headings and buttons |
+| Kenney Fonts | Headings, buttons and labels |
 | Music Loops, RPG Audio, Impact Sounds, Interface Sounds, Music Jingles | Music and sound |
 
 [Montserrat](https://github.com/JulietaUla/Montserrat) by Julieta Ulanovsky
 and the Montserrat Project Authors, under the SIL Open Font License 1.1
 (`assets/fonts/OFL.txt`, shipped as `OFL.txt` beside the game), is used for
-running text.
+text that runs over several lines.
 
 ## Code
 
