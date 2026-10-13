@@ -1,6 +1,7 @@
 class_name PauseMenu
 extends Control
-## The pause menu. The night carries on for everyone else while it's open.
+## The pause menu. The night carries on for everyone else while it's open,
+## but the music and the sounds playing wait for Resume.
 
 var game: Game
 var _col: VBoxContainer
@@ -45,6 +46,7 @@ func setup(p_game: Game) -> void:
 
 func open() -> void:
 	visible = true
+	LGAudio.pause_game(true)
 	_panel.visible = true
 	_role_button.visible = not game.hud.practice and game.role >= 0
 	var lines := []
@@ -78,6 +80,8 @@ func _show_over(open_card: Callable) -> void:
 
 
 func close() -> void:
+	if visible:
+		LGAudio.pause_game(false)
 	visible = false
 	var f := get_viewport().gui_get_focus_owner()
 	if f:
