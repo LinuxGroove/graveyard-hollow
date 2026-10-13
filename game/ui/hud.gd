@@ -80,6 +80,7 @@ func setup(p_game: Game) -> void:
 	root.add_child(howto)
 	role_card = RoleCard.new()
 	root.add_child(role_card)
+	LGFocusPause.watch(self, open_pause)
 	_build_hint()
 	if practice:
 		_time_label.visible = false
@@ -105,6 +106,16 @@ func setup(p_game: Game) -> void:
 func blocks_input() -> bool:
 	return chore_game.visible or meeting.visible or map.visible or pause.visible or end.visible \
 			or howto.visible or role_card.visible or (guide != null and guide.blocking())
+
+
+## Opens the pause menu when the window loses focus, unless a screen that
+## keeps the pause button from opening it is up.
+func open_pause() -> void:
+	if end.visible or game.phase == Rules.Phase.LOADING or pause.visible or map.visible or chore_game.visible:
+		return
+	if howto.visible or role_card.visible or (guide != null and guide.blocking()):
+		return
+	pause.open()
 
 
 func open_chore(chore: Dictionary, on_done: Callable) -> void:
