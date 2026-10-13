@@ -344,11 +344,20 @@ func _test_meeting_focus() -> void:
 		await get_tree().process_frame
 	game.hud.howto.close()
 	game.hud.role_card.visible = false
-	# The pause menu never stops the night, even with only bots.
-	await _check_focus_pause(game.hud.get_node_or_null("FocusPause"), game.hud.pause.is_visible, game.hud.pause.close, false, false)
+	# The pause menu never stops the night, even with only bots, but it holds
+	# the music.
+	await _check_focus_pause(game.hud.get_node_or_null("FocusPause"), game.hud.pause.is_visible, game.hud.pause.close, false)
+	# A meeting called while this player is paused keeps its music for Resume.
+	game.hud.pause.open()
 	host.actors[1].pos = host.village.bell_position()
 	host.actors[1].bell_ready = 0.0
 	check(host.act(1, Rules.Act.BELL, 0), "focus test: the bell rings")
+	for i in 3:
+		await get_tree().process_frame
+	var tune: AudioStreamPlayer = LGAudio._current_music
+	check(game.phase == Rules.Phase.MEETING and tune.stream_paused, "a meeting called behind the pause menu waits with its music")
+	game.hud.pause.close()
+	check(tune.playing, "Resume starts the meeting's music")
 	var meeting := game.hud.meeting
 	var vp := get_viewport()
 	for phase in ["talk", "vote"]:
@@ -398,8 +407,12 @@ func _check_focus_pause(watcher: LGFocusPause, menu_open: Callable, close: Calla
 	watcher.focus_lost()
 	await get_tree().create_timer(grace, true, false, true).timeout
 	check(menu_open.call() and get_tree().paused == pauses, "losing focus opens the pause menu")
+	var track: AudioStreamPlayer = null
 	if holds_sound:
 		check(probe.stream_paused and LGAudio.is_game_paused(), "the pause menu holds the music and the game's sounds")
+		LGAudio.play_music(_silence())
+		track = LGAudio._current_music
+		check(track.stream_paused, "music that starts behind the pause menu waits for Resume")
 	else:
 		check(not probe.stream_paused and not LGAudio.is_game_paused(), "a menu over a game that carries on leaves its sound playing")
 	if pauses:
@@ -408,6 +421,9 @@ func _check_focus_pause(watcher: LGFocusPause, menu_open: Callable, close: Calla
 	await get_tree().process_frame
 	check(not menu_open.call() and not get_tree().paused, "the game carries on after Resume")
 	check(probe.playing and not LGAudio.is_game_paused(), "Resume picks the sound up where it stopped")
+	if track:
+		check(track.playing, "Resume starts the music that waited")
+		LGAudio.stop_music()
 	probe.queue_free()
 	LGSettings.set_value("video", "focus_pause", false, false)
 	check(not watcher.pause_now() and not menu_open.call(), "Pause when switching away can be turned off")
